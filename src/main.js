@@ -8,7 +8,10 @@ import gameHtml from './components/game.html?raw';
 
 import { game } from './game.js';
 
+import { injectSpeedInsights } from '@vercel/speed-insights';
+
 document.querySelector('#app').innerHTML = welcomeHtml;
+injectSpeedInsights();
 
 document.addEventListener('click', (e) => {
   const startBtn = e.target.closest('#start-btn');
