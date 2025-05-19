@@ -8,9 +8,12 @@ import gameHtml from './components/game.html?raw';
 
 import { game } from './game.js';
 
+import { inject } from '@vercel/analytics'; 
 import { injectSpeedInsights } from '@vercel/speed-insights';
 
 document.querySelector('#app').innerHTML = welcomeHtml;
+
+inject();
 injectSpeedInsights();
 
 document.addEventListener('click', (e) => {
