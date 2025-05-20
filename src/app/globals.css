@@ -3,6 +3,10 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+/* dot */
+.color-dot{
+  background-color: #26262b;
+}
 /* path */
 .path-background {
   position: absolute;

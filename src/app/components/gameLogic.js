@@ -14,15 +14,17 @@ export default async function game() {
     let targetNumber = 1;
     let fixedNumbers = {};
 
+    let undoClicks = 0;
+    let backtrackMoves = 0;
+    let clearCount = 0;
+
     // Bloqueia rolagem apenas quando o toque começa dentro do grid
     const grid = document.querySelector('.d-grid');
 
-    // Para touch (mobile)
     grid.addEventListener('touchmove', function (e) {
         e.preventDefault();
     }, { passive: false });
 
-    // Para mouse/trackpad (desktop)
     grid.addEventListener('wheel', function (e) {
         e.preventDefault();
     }, { passive: false });
@@ -35,6 +37,12 @@ export default async function game() {
         started = false;
         targetNumber = 1;
         fixedNumbers = {};
+
+        // Resetar as estatísticas do jogo anterior
+        backtrackMoves = 0;
+        undoClicks = 0;
+        clearCount = 0;
+
         generateGrid(gridSize);
     }
 
@@ -49,6 +57,7 @@ export default async function game() {
     const clearButton = document.getElementById("clear-btn");
     if (clearButton) {
         clearButton.addEventListener("click", () => {
+            clearCount++;
             path.forEach(cell => {
                 const cellElement = document.querySelector(`[data-pos="${cell.row},${cell.col}"]`);
                 const container = cellElement.querySelector('.path-container');
@@ -83,15 +92,17 @@ export default async function game() {
 
     const undoButton = document.getElementById("undo-btn");
     if (undoButton) {
-        undoButton.addEventListener("click", undoLastMove);
+        undoButton.addEventListener("click", () => {
+            undoClicks++;
+            undoLastMove();
+        });
     }
 
-    // função para desfazer o último movimento
     function undoLastMove() {
         if (path.length <= 1) return;
 
-        const last = path.pop(); // célula que será removida
-        const prev = path[path.length - 1]; // célula anterior, permanece no caminho
+        const last = path.pop();
+        const prev = path[path.length - 1];
 
         const lastKey = `${last.row},${last.col}`;
         const lastCell = document.querySelector(`[data-pos="${lastKey}"]`);
@@ -99,15 +110,12 @@ export default async function game() {
         if (lastContainer) lastContainer.remove();
         lastCell.classList.remove("path-background", "text-white");
 
-        // Se era número fixo, voltar número
         if (fixedNumbers[lastKey]) targetNumber--;
 
-        // Atualiza a célula anterior, removendo a última linha e a curva se necessário
         const prevKey = `${prev.row},${prev.col}`;
         const prevCell = document.querySelector(`[data-pos="${prevKey}"]`);
         const prevContainer = ensurePathContainer(prevCell);
 
-        // Remove a linha correspondente à direção do último passo
         const dx = last.col - prev.col;
         const dy = last.row - prev.row;
 
@@ -127,19 +135,15 @@ export default async function game() {
 
         if (targetLine) targetLine.remove();
 
-        // Remove a curva se existir
         const corner = prevContainer.querySelector('.corner');
         if (corner) corner.remove();
 
-        // Rechecar se precisa recolocar a curva
-        checkAndAddCorner(prevCell); // vai reavaliar se ainda há cruzamento e colocar a curva se necessário
+        checkAndAddCorner(prevCell);
     }
 
     function generateGrid(size) {
         gridContainer.innerHTML = "";
         fixedNumbers = {};
-
-        // const grid = Array.from({ length: size }, () => Array.from({ length: size }, () => null));
 
         const directions = [
             { row: -1, col: 0 },
@@ -206,7 +210,6 @@ export default async function game() {
             return;
         }
 
-        // Define 6 posições fixas ao longo do caminho valido com valores 1 a 6
         const steps = new Set([0, Math.floor(path.length / 5), Math.floor(path.length * 2 / 5), Math.floor(path.length * 3 / 5), Math.floor(path.length * 4 / 5), path.length - 1]);
         let value = 1;
         for (const idx of [...steps].sort((a, b) => a - b)) {
@@ -225,8 +228,8 @@ export default async function game() {
                 if (fixedNumbers[key]) {
                     const numberSpan = document.createElement("span");
                     numberSpan.classList.add(
-                        "z-1", "position-absolute", "top-50", "start-50", "translate-middle",
-                        "bg-body-secondary", "text-white", "rounded-circle", "d-flex", "justify-content-center", "align-items-center"
+                        "dot", "z-1", "position-absolute", "top-50", "start-50", "translate-middle",
+                        "text-white", "rounded-circle", "d-flex", "justify-content-center", "align-items-center"
                     );
                     numberSpan.style.width = "30px";
                     numberSpan.style.height = "30px";
@@ -271,7 +274,7 @@ export default async function game() {
     });
 
     function startTimer() {
-        if (startTime !== null) return; // Já está rodando, não faz nada
+        if (startTime !== null) return;
         startTime = Date.now();
         timerInterval = setInterval(() => {
             const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
@@ -308,6 +311,7 @@ export default async function game() {
         if (!isAdjacent) return;
 
         if (secondLast && secondLast.row === row && secondLast.col === col) {
+            backtrackMoves++;
             undoLastMove();
             return;
         }
@@ -342,12 +346,97 @@ export default async function game() {
                 gameTime.textContent = timerDisplay.textContent;
             }
 
-            const realCornerCount = document.querySelectorAll('.path-line.corner').length;
-            console.log(`Curvas renderizadas no DOM: ${realCornerCount}`);
+            const stats = getGameStats();
+
+            console.log("Estatísticas do jogo:", stats);
+
+            let difficulty = 'fácil';
+            if (lvlDificulty) {
+                difficulty = lvlDificulty.textContent.replace('Dificuldade: ', '').toLowerCase();
+            }
+
+            const estimatedCurves = estimateCurveCountFromPath(path);
+
+            const score = calculateScore(stats, difficulty, estimatedCurves);
+
+            console.log(`Score final: ${score}`);
 
             const modal = new bootstrap.Modal(document.getElementById("game-over-modal"));
             modal.show();
         }
+    }
+
+    function getGameStats() {
+        const realCornerCount = document.querySelectorAll('.path-line.corner').length;
+        return {
+            curvas: realCornerCount,
+            desfazeresManuais: backtrackMoves,
+            desfazeresBotao: undoClicks,
+            clears: clearCount,
+            tempo: timerDisplay.textContent,
+        };
+    }
+
+    function calculateScore(stats, difficulty, estimatedCurves) {
+        const [min, sec] = stats.tempo.split(':').map(Number);
+        const tempoSegundos = min * 60 + sec;
+
+        let timePenaltyFactor;
+        switch (difficulty.toLowerCase()) {
+            case 'difícil':
+                timePenaltyFactor = 0.5;
+                break;
+            case 'média':
+                timePenaltyFactor = 1;
+                break;
+            case 'fácil':
+            default:
+                timePenaltyFactor = 2;
+                break;
+        }
+
+        const timePenalty = tempoSegundos * timePenaltyFactor;
+
+        const totalUndoActions = stats.desfazeresManuais + stats.desfazeresBotao + stats.clears;
+        const undoPenalty = totalUndoActions * 10;
+
+        let curveScore = 0;
+        if (stats.curvas < estimatedCurves) {
+            curveScore = 100; // bônus
+        } else if (stats.curvas === estimatedCurves) {
+            curveScore = 50; // neutro
+        } else {
+            curveScore = -50; // penalidade
+        }
+
+        const baseScore = 1000;
+        const score = baseScore - timePenalty - undoPenalty + curveScore;
+
+        return Math.max(0, Math.round(score));
+    }
+
+    function estimateCurveCountFromPath(path) {
+        let curveCount = 0;
+        let lastDirection = null;
+
+        for (let i = 1; i < path.length; i++) {
+            const dx = path[i].col - path[i - 1].col;
+            const dy = path[i].row - path[i - 1].row;
+
+            let currentDirection = '';
+            if (dx === 1) currentDirection = 'right';
+            else if (dx === -1) currentDirection = 'left';
+            else if (dy === 1) currentDirection = 'down';
+            else if (dy === -1) currentDirection = 'up';
+
+            if (lastDirection && currentDirection !== lastDirection) {
+                curveCount++;
+            }
+
+            lastDirection = currentDirection;
+        }
+
+        return curveCount;
     }
 
     function drawPathBetween(from, to) {
