@@ -228,7 +228,7 @@ export default async function game() {
                 if (fixedNumbers[key]) {
                     const numberSpan = document.createElement("span");
                     numberSpan.classList.add(
-                        "dot", "z-1", "position-absolute", "top-50", "start-50", "translate-middle",
+                        "color-dot", "z-1", "position-absolute", "top-50", "start-50", "translate-middle",
                         "text-white", "rounded-circle", "d-flex", "justify-content-center", "align-items-center"
                     );
                     numberSpan.style.width = "30px";
