@@ -2,10 +2,11 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import game from '../components/gameLogic';
 
 export default function GamePage() {
   useEffect(() => {
-    // futuro import da lógica de game.js
+    game();
   }, []);
 
   return (
@@ -46,10 +47,6 @@ export default function GamePage() {
           </div>
           {/* Game Grid */}
           <div className="container text-center">
-            {/* <div className="d-grid border rounded p-1 mb-2 bg-body" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
-              
-              Células do grid são criadas dinamicamente via JS
-            </div> */}
             <div className="d-grid border rounded p-1 mb-2 bg-body" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }} >
               {[...Array(6)].map((_, row) =>
                 [...Array(6)].map((_, col) => (
@@ -136,8 +133,8 @@ export default function GamePage() {
                   <p>Time: <span id="game-time">00:00</span></p>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                  <button type="button" className="btn btn-primary" id="play-again-btn">Play Again</button>
+                  <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                  <button type="button" className="btn btn-primary" id="play-again-btn">Jogar novamente</button>
                 </div>
               </div>
             </div>
