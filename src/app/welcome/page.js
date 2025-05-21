@@ -21,7 +21,7 @@ export default function WelcomePage() {
       </header>
       <main className="flex-fill d-flex justify-content-center align-items-center">
         <div className="text-center">
-          <Image src="/images/logo.png" alt="Logo do Zip!" width={84} height={84} />
+          <Image src="/images/logo.png" alt="Logo do Zip!" priority={true} width={84} height={84} />
           <h1 className="mb-4">Zip!</h1>
           <p>a simple path-drawing game</p>
           <div className="d-grid gap-2 pt-4">
