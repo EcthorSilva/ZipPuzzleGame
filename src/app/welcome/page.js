@@ -33,7 +33,7 @@ export default function WelcomePage() {
         <div className="container">
           <div className="d-flex justify-content-between">
             <div className="col-md-4 d-flex align-items-center">
-              <span className="mb-3 mb-md-0 text-body-secondary">© 2025 Zip! Puzzle Game</span>
+              <span className="mb-3 mb-md-0 text-body-secondary d-none">© 2025 Zip! Puzzle Game</span>
             </div>
             <ul className="nav col-md-4 justify-content-end list-unstyled d-flex">
               <li className="ms-3">
